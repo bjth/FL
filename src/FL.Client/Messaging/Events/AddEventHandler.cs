@@ -9,8 +9,8 @@ public static class AddServiceCollectionEventHandlerExtensions
     public static IServiceCollection AddEventHandler<T, THandler>(this IServiceCollection services)
         where THandler : class, IEventHandler<T>
     {
-        services.AddSingleton<IEventHandler<T>, THandler>();
-        services.AddSingleton<IEventHandler, THandler>();
+        services.AddScoped<IEventHandler<T>, THandler>();
+        services.AddScoped<IEventHandler, THandler>();
         return services;
     }
 

@@ -4,7 +4,6 @@ using FL.Client.EntityData;
 using FL.Client.Messaging.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-
 using Raylib_cs;
 
 //Setup services.
@@ -28,8 +27,8 @@ provider.SubscribeAsyncEventHandlers();
 
 Raylib.InitWindow(800, 480, "Hello World");
 
-
-using (var world = provider.GetRequiredService<World>())
+using (var scope = provider.CreateScope())
+using (var world = scope.ServiceProvider.GetRequiredService<World>())
 {
     var query = new QueryDescription().WithAll<Position>();
     while (!Raylib.WindowShouldClose())
@@ -38,11 +37,13 @@ using (var world = provider.GetRequiredService<World>())
         Raylib.BeginDrawing();
         Raylib.ClearBackground(Color.White);
         Raylib.DrawText("Hello, world!", 12, 12, 20, Color.Black);
-        
-        world.Query(in query, (Entity entity, ref Position pos) => { Raylib.DrawRectangle(pos.X, pos.Y, 32, 32, Color.Red); });
+
+        world.Query(in query,
+            (Entity entity, ref Position pos) => { Raylib.DrawRectangle(pos.X, pos.Y, 32, 32, Color.Red); });
 
         Raylib.EndDrawing();
     }
 }
+
 
 Raylib.CloseWindow();
