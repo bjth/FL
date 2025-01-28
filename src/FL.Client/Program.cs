@@ -6,6 +6,7 @@ using FL.Client.Providers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Raylib_cs;
+using static Raylib_cs.Raylib;
 
 //Setup services.
 var services = new ServiceCollection();
@@ -27,7 +28,7 @@ services.AddEventHandler<KeyHeldEvent, MovePlayerEventHandler>();
 var provider = services.BuildServiceProvider();
 provider.SubscribeAsyncEventHandlers();
 
-Raylib.InitWindow(800, 480, "Hello World");
+InitWindow(800, 480, "Hello World");
 
 using (var scope = provider.CreateScope())
 using (var world = scope.ServiceProvider.GetRequiredService<World>())
@@ -35,21 +36,27 @@ using (var world = scope.ServiceProvider.GetRequiredService<World>())
     var query = new QueryDescription().WithAll<Position>();
     var deltaTimeProvider = scope.ServiceProvider.GetRequiredService<DeltaTimeProvider>();
     var inputManager = scope.ServiceProvider.GetRequiredService<InputManager>();
-    
-    while (!Raylib.WindowShouldClose())
+
+    SetTargetFPS(240);
+    while (!WindowShouldClose())
     {
         await deltaTimeProvider.CalculateDeltaTimeAsync();
         await inputManager.HandleInputAsync();
-        Raylib.BeginDrawing();
-        Raylib.ClearBackground(Color.White);
-        Raylib.DrawText("Hello, world!", 12, 12, 20, Color.Black);
+        BeginDrawing();
+        ClearBackground(Color.White);
+        DrawText("Hello, world!", 10, 30, 20, Color.Black);
 
         world.Query(in query,
-            (Entity entity, ref Position pos) => { Raylib.DrawRectangle((int)Math.Ceiling(pos.X), (int)Math.Ceiling(pos.Y), 32, 32, Color.Red); });
+            (Entity entity, ref Position pos) =>
+            {
+                DrawRectangle((int)Math.Ceiling(pos.X), (int)Math.Ceiling(pos.Y), 32, 32, Color.Red);
+            });
 
-        Raylib.EndDrawing();
+        DrawText($"{GetFPS()} fps", 10, 10, 20, Color.Green);
+
+        EndDrawing();
     }
 }
 
 
-Raylib.CloseWindow();
+CloseWindow();
