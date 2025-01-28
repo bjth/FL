@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using Arch.Core;
+﻿using Arch.Core;
 using FL.Client;
 using FL.Client.EntityData;
 using FL.Client.Messaging.Events;
@@ -22,11 +21,10 @@ services.AddSingleton<DeltaTimeProvider>();
 services.AddMessagePipe();
 services.AddEventHandler<KeyPressedEvent, KeyPressedEventHandler>();
 services.AddEventHandler<KeyPressedEvent, SpawnPlayerEventHandler>();
-services.AddEventHandler<KeyPressedEvent, MovePlayerEventHandler>();
+services.AddEventHandler<KeyHeldEvent, MovePlayerEventHandler>();
 
 //Build services
 var provider = services.BuildServiceProvider();
-var inputManager = provider.GetRequiredService<InputManager>();
 provider.SubscribeAsyncEventHandlers();
 
 Raylib.InitWindow(800, 480, "Hello World");
@@ -36,6 +34,7 @@ using (var world = scope.ServiceProvider.GetRequiredService<World>())
 {
     var query = new QueryDescription().WithAll<Position>();
     var deltaTimeProvider = scope.ServiceProvider.GetRequiredService<DeltaTimeProvider>();
+    var inputManager = scope.ServiceProvider.GetRequiredService<InputManager>();
     
     while (!Raylib.WindowShouldClose())
     {

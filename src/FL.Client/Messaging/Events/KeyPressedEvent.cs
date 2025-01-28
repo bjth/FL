@@ -8,6 +8,7 @@ using Raylib_cs;
 namespace FL.Client.Messaging.Events;
 
 public sealed record KeyPressedEvent(int KeyCode, KeyboardKey Key);
+public sealed record KeyHeldEvent(int KeyCode, KeyboardKey Key);
 
 public sealed class KeyPressedEventHandler(ILogger<KeyPressedEventHandler> logger, WindowManager windowManager) : IEventHandler<KeyPressedEvent>
 {
@@ -31,17 +32,17 @@ public sealed class SpawnPlayerEventHandler(ILogger<SpawnPlayerEventHandler> log
     }
 }
 
-public sealed class MovePlayerEventHandler(DeltaTimeProvider deltaTimeProvider, World world) : IEventHandler<KeyPressedEvent>
+public sealed class MovePlayerEventHandler(DeltaTimeProvider deltaTimeProvider, World world) : IEventHandler<KeyHeldEvent>
 {
     private readonly QueryDescription _queryDescription = new QueryDescription().WithAll<Position>();
     
-    public ValueTask Handle(KeyPressedEvent? keyPressedEvent, CancellationToken cancellationToken = default)
+    public ValueTask Handle(KeyHeldEvent? keyPressedEvent, CancellationToken cancellationToken = default)
     {
         if (keyPressedEvent is null) return ValueTask.CompletedTask;
         var velocity = 20f * deltaTimeProvider.DeltaTime;
         var distance = 20f * velocity;
         
-        world.Query(in _queryDescription, (Entity entity, ref Position pos) =>
+        world.Query(in _queryDescription, (ref Position pos) =>
         {
             switch (keyPressedEvent.Key)
             {

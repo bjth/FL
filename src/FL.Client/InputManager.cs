@@ -4,7 +4,7 @@ using Raylib_cs;
 
 namespace FL.Client;
 
-public class InputManager(IAsyncPublisher<KeyPressedEvent> keyPressedEventProducer)
+public class InputManager(IAsyncPublisher<KeyPressedEvent> keyPressedEventProducer, IAsyncPublisher<KeyHeldEvent> keyHeldEventProducer)
 {
     private readonly HashSet<KeyboardKey> _pressedKeys = new();
 
@@ -16,13 +16,15 @@ public class InputManager(IAsyncPublisher<KeyPressedEvent> keyPressedEventProduc
             pressedKey = Raylib.GetKeyPressed();
             if (pressedKey == 0) continue;
             _pressedKeys.Add((KeyboardKey)pressedKey);
+            await keyPressedEventProducer.PublishAsync(new KeyPressedEvent(pressedKey, (KeyboardKey)pressedKey));
+            
         } while (pressedKey != 0);
 
         foreach (var keyPressedEvent in _pressedKeys)
         {
             if (Raylib.IsKeyDown(keyPressedEvent))
             {
-                await keyPressedEventProducer.PublishAsync(new KeyPressedEvent((int)keyPressedEvent, keyPressedEvent));
+                await keyHeldEventProducer.PublishAsync(new KeyHeldEvent((int)keyPressedEvent, keyPressedEvent));
                 continue;
             }
             _pressedKeys.Remove(keyPressedEvent);
