@@ -6,6 +6,8 @@ namespace FL.Client;
 
 public class InputManager(IAsyncPublisher<KeyPressedEvent> keyPressedEventProducer)
 {
+    private readonly HashSet<KeyboardKey> _pressedKeys = new();
+
     public async Task HandleInputAsync()
     {
         int pressedKey;
@@ -13,11 +15,17 @@ public class InputManager(IAsyncPublisher<KeyPressedEvent> keyPressedEventProduc
         {
             pressedKey = Raylib.GetKeyPressed();
             if (pressedKey == 0) continue;
-            // do
-            // {
-                await keyPressedEventProducer.PublishAsync(new KeyPressedEvent(pressedKey,
-                    (KeyboardKey)pressedKey));
-            // } while (Raylib.IsKeyDown((KeyboardKey)pressedKey));
+            _pressedKeys.Add((KeyboardKey)pressedKey);
         } while (pressedKey != 0);
+
+        foreach (var keyPressedEvent in _pressedKeys)
+        {
+            if (Raylib.IsKeyDown(keyPressedEvent))
+            {
+                await keyPressedEventProducer.PublishAsync(new KeyPressedEvent((int)keyPressedEvent, keyPressedEvent));
+                continue;
+            }
+            _pressedKeys.Remove(keyPressedEvent);
+        }
     }
 }

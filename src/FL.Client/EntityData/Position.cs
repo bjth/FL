@@ -1,3 +1,3 @@
 ﻿namespace FL.Client.EntityData;
 
-public record struct Position(int X, int Y);
+public record struct Position(float X, float Y);
