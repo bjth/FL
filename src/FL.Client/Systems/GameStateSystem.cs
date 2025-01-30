@@ -15,7 +15,7 @@ public class GameStateSystem(World world, WindowProvider windowProvider) : IGame
     
     public ValueTask InitializeAsync()
     {
-        world.Create(new Drawable { DrawFn = DrawUi, ZIndex = -1});
+        world.Create(new Drawable { DrawFn = DrawUi, ZIndex = 999});
         return default;
     }
 
@@ -44,14 +44,14 @@ public class GameStateSystem(World world, WindowProvider windowProvider) : IGame
 
     private void DrawStartGame()
     {
-        var startText = "Press F1 to Start";
+        const string startText = "Press F1 to Start";
         var length = GetTextLength(startText);
         var xPost = Convert.ToInt32(windowProvider.ScreenWidth / 1.5 - length * FontSize / 2);
         var yPost = Convert.ToInt32(windowProvider.ScreenHeight / 2 - FontSize / 2);
         DrawText(startText, xPost, yPost, FontSize, Color.White);
     }
 
-    private uint GetTextLength(string text)
+    private static uint GetTextLength(string text)
     {
         uint length;
         unsafe

@@ -37,6 +37,8 @@ services.AddSignalConsumer<EntityCollisionSignal, AppleSystem>();
 
 var provider = services.BuildServiceProvider();
 
+
+SetConfigFlags(ConfigFlags.VSyncHint);
 InitWindow(screenWidth, screenHeight, "Mondo Snake");
 SetTargetFPS(240);
 
