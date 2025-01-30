@@ -1,12 +1,14 @@
 ﻿using Arch.Core;
-using FL.Client;
-using FL.Client.EntityData;
-using FL.Client.Messaging.Events;
+using FL.Client.Messaging.Signals;
 using FL.Client.Providers;
+using FL.Client.Systems;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
+
+const int screenWidth = 800;
+const int screenHeight = 480;
 
 //Setup services.
 var services = new ServiceCollection();
@@ -14,46 +16,48 @@ services.AddLogging(b => b.AddSimpleConsole());
 
 //Setup world and Library Managers
 services.AddSingleton(World.Create());
-services.AddSingleton<WindowManager>();
-services.AddSingleton<InputManager>();
+services.AddScoped<WindowProvider>();
 services.AddSingleton<DeltaTimeProvider>();
 
-//Setup event handlers. -- TODO move this to its own configuration somewhere.
+//Setup Systems.
+services.AddGameSystem<DeltaTimeSystem>();
+services.AddGameSystem<InputSystem>();
+services.AddGameSystem<GridMapSystem>();
+services.AddGameSystem<SnakeSystem>();
+services.AddGameSystem<AppleSystem>();
+services.AddGameSystem<DrawSystem>();
+
+//Setup Signals and Consumers
 services.AddMessagePipe();
-services.AddEventHandler<KeyPressedEvent, KeyPressedEventHandler>();
-services.AddEventHandler<KeyPressedEvent, SpawnPlayerEventHandler>();
-services.AddEventHandler<KeyHeldEvent, MovePlayerEventHandler>();
+services.AddSignalConsumer<KeyPressedSignal, KeyPressedSignalConsumer>();
+services.AddSignalConsumer<KeyPressedSignal, SnakeSystem>();
+services.AddSignalConsumer<EntityCollisionSignal, AppleSystem>();
 
-//Build services
 var provider = services.BuildServiceProvider();
-provider.SubscribeAsyncEventHandlers();
 
-InitWindow(800, 480, "Hello World");
+InitWindow(screenWidth, screenHeight, "Mondo Snake");
+SetTargetFPS(240);
 
-using (var scope = provider.CreateScope())
-using (var world = scope.ServiceProvider.GetRequiredService<World>())
+await using (var asyncScope = provider.CreateAsyncScope())
+using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
 {
-    var query = new QueryDescription().WithAll<Position>();
-    var deltaTimeProvider = scope.ServiceProvider.GetRequiredService<DeltaTimeProvider>();
-    var inputManager = scope.ServiceProvider.GetRequiredService<InputManager>();
-
-    SetTargetFPS(240);
+    asyncScope.ServiceProvider.UseSignalConsumers();
+    var gameSystems = asyncScope.ServiceProvider.GetServices<IGameSystem>().ToList();
+    foreach (var gameSystem in gameSystems)
+    {
+        await gameSystem.InitializeAsync();
+    }
+    
     while (!WindowShouldClose())
     {
-        await deltaTimeProvider.CalculateDeltaTimeAsync();
-        await inputManager.HandleInputAsync();
         BeginDrawing();
-        ClearBackground(Color.White);
-        DrawText("Hello, world!", 10, 30, 20, Color.Black);
+        ClearBackground(GetColor(0x000000FF));
 
-        world.Query(in query,
-            (Entity entity, ref Position pos) =>
-            {
-                DrawRectangle((int)Math.Ceiling(pos.X), (int)Math.Ceiling(pos.Y), 32, 32, Color.Red);
-            });
-
-        DrawText($"{GetFPS()} fps", 10, 10, 20, Color.Green);
-
+        foreach (var gameSystem in gameSystems)
+        {
+            await gameSystem.UpdateAsync();
+        }
+        
         EndDrawing();
     }
 }
