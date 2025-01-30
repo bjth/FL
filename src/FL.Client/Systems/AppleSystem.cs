@@ -14,7 +14,7 @@ public class AppleSystem(World world, DeltaTimeProvider deltaTimeProvider, GridM
     private readonly HashSet<Entity> _apples = [];
     private float _timePassed;
     private const float SpawnSpeed = 8f;
-    private const int MaxApples = 4;
+    private const int MaxApples = 1;
 
     private ValueTask SpawnApple()
     {

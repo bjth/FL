@@ -22,6 +22,8 @@ services.AddSingleton<DeltaTimeProvider>();
 //Setup Systems.
 services.AddGameSystem<DeltaTimeSystem>();
 services.AddGameSystem<InputSystem>();
+
+services.AddGameSystem<GameStateSystem>();
 services.AddGameSystem<GridMapSystem>();
 services.AddGameSystem<SnakeSystem>();
 services.AddGameSystem<AppleSystem>();
@@ -47,7 +49,7 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
     {
         await gameSystem.InitializeAsync();
     }
-    
+
     while (!WindowShouldClose())
     {
         BeginDrawing();
@@ -57,7 +59,7 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
         {
             await gameSystem.UpdateAsync();
         }
-        
+
         EndDrawing();
     }
 }

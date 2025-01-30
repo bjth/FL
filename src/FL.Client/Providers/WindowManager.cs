@@ -10,4 +10,5 @@ public class WindowProvider
     }
     
     public int ScreenWidth => Raylib.GetScreenWidth();
+    public int ScreenHeight => Raylib.GetScreenHeight();
 }

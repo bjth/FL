@@ -14,92 +14,153 @@ public class SnakeSystem(
     World world,
     DeltaTimeProvider deltaTimeProvider,
     GridMapSystem gridMapSystem,
-    WindowProvider windowProvider,
     IAsyncPublisher<EntityCollisionSignal> appleCollisionPublisher)
     : IGameSystem, ISignalConsumer<KeyPressedSignal>
 {
     private Entity? _snakeEntity;
-    private Direction _nextDirection = Direction.Right;
-
     private float _timePassed;
-    private float _snakeSpeed = 8f;
-    private const float SnakeSpeedIncrement = 3.5f;
+    private float _snakeSpeed = 12f;
+    private const float SnakeSpeedIncrement = 1.5f;
     private const float SpeedThreshold = 1f;
 
-    private const int MaxSegments = 1024;
-    private int _currentSegmentsCount = 3;
-    private readonly GridPosition[] _segments = new GridPosition[MaxSegments];
+    private const int StartingSegmentCount = 3;
+    private readonly List<(GridPosition position, Direction direction)> _segments = new();
+    private Direction _changeDirection = Direction.Right;
+
+    private readonly Dictionary<KeyboardKey, Direction> _directionMap = new()
+    {
+        { KeyboardKey.A, Direction.Left },
+        { KeyboardKey.D, Direction.Right },
+        { KeyboardKey.W, Direction.Up },
+        { KeyboardKey.S, Direction.Down },
+    };
 
     public ValueTask Handle(KeyPressedSignal? keyPressedEvent, CancellationToken token = default)
     {
         if (keyPressedEvent is null) return ValueTask.CompletedTask;
         if (keyPressedEvent.Key == KeyboardKey.F1) return SpawnSnake();
-        if (_snakeEntity is null) return ValueTask.CompletedTask;
-
-        switch (keyPressedEvent.Key)
-        {
-            case KeyboardKey.A:
-            {
-                _nextDirection = Direction.Left;
-                return ValueTask.CompletedTask;
-            }
-            case KeyboardKey.D:
-                _nextDirection = Direction.Right;
-                return ValueTask.CompletedTask;
-            case KeyboardKey.W:
-                _nextDirection = Direction.Up;
-                return ValueTask.CompletedTask;
-            case KeyboardKey.S:
-                _nextDirection = Direction.Down;
-                return ValueTask.CompletedTask;
-            default:
-                return ValueTask.CompletedTask;
-        }
+        if (!_directionMap.TryGetValue(keyPressedEvent.Key, out var newDirection)) return ValueTask.CompletedTask;
+        _changeDirection = newDirection;
+        return ValueTask.CompletedTask;
     }
 
     private ValueTask SpawnSnake()
     {
         if (_snakeEntity != null) return ValueTask.CompletedTask;
-        _snakeEntity = world.Create(new Snake(), new Drawable { DrawFn = Draw, ZIndex = 10 }, _nextDirection);
+        _snakeEntity = world.Create(new Snake(), new Drawable { DrawFn = Draw, ZIndex = 10 }, Direction.Right);
         var gridPosition = gridMapSystem.TakeEmptyGridPosition(_snakeEntity.Value, 4);
         if (gridPosition == null) return ValueTask.CompletedTask;
 
-        _segments[0] = gridPosition.Value; //Head
-        for (var i = 0; i <= _currentSegmentsCount; i++)
+        _segments.Add((gridPosition.Value, Direction.Right)); //Head
+        for (var i = 0; i <= StartingSegmentCount; i++)
         {
-            var bodySegmentPosition = gridPosition.Value with { Column = gridPosition.Value.Column - i };
-            gridMapSystem.AddEntity(_snakeEntity.Value, bodySegmentPosition);
-            _segments[i + 1] = bodySegmentPosition;
+            AddSnakeSegment(1);
         }
 
         _snakeEntity.Value.Add(gridPosition.Value);
         return ValueTask.CompletedTask;
     }
 
-    private void AddSnakeSegment()
+    private void AddSnakeSegment(int distance)
     {
         if (_snakeEntity is null) return;
-        var gridPosition = _segments[_currentSegmentsCount + 1];
-        Console.WriteLine($"GridPosition: {gridPosition.Column}, {gridPosition.Row}");
-        _currentSegmentsCount++;
-        gridMapSystem.AddEntity(_snakeEntity.Value, gridPosition);
+        var nextTo = _segments.Last();
+        var pos = GetNewPosition(nextTo.position, OppositeDirection(nextTo.direction), distance);
+        gridMapSystem.AddEntity(_snakeEntity.Value, pos);
+        _segments.Add((pos, nextTo.direction));
     }
 
     private static Direction SanitizedDirection(Direction current, Direction next)
     {
-        switch (current)
+        return current switch
         {
-            case Direction.Down when next == Direction.Up:
-                return Direction.Down;
-            case Direction.Up when next == Direction.Down:
-                return Direction.Up;
-            case Direction.Left when next == Direction.Right:
-                return Direction.Left;
-            case Direction.Right when next == Direction.Left:
-                return Direction.Right;
-            default:
-                return next;
+            Direction.Down when next == Direction.Up => Direction.Down,
+            Direction.Up when next == Direction.Down => Direction.Up,
+            Direction.Left when next == Direction.Right => Direction.Left,
+            Direction.Right when next == Direction.Left => Direction.Right,
+            _ => next
+        };
+    }
+
+    private static Direction OppositeDirection(Direction direction)
+    {
+        return direction switch
+        {
+            Direction.Down => Direction.Up,
+            Direction.Up => Direction.Down,
+            Direction.Left => Direction.Right,
+            Direction.Right => Direction.Left,
+            _ => Direction.Right
+        };
+    }
+
+    private static GridPosition GetNewPosition(GridPosition currentPosition, Direction direction, int distance)
+    {
+        var row = currentPosition.Row;
+        var column = currentPosition.Column;
+
+        switch (direction)
+        {
+            case Direction.Up:
+                row -= distance;
+                break;
+            case Direction.Down:
+                row += distance;
+                break;
+            case Direction.Left:
+                column -= distance;
+                break;
+            case Direction.Right:
+                column += distance;
+                break;
         }
+
+        return new GridPosition(column, row);
+    }
+
+    private void ResetSnake()
+    {
+        //Reset the game, as we have lost.
+        if (_snakeEntity is null) return;
+        world.Destroy(_snakeEntity.Value);
+        _snakeEntity = null;
+        _changeDirection = Direction.Right;
+        foreach (var segment in _segments)
+        {
+            gridMapSystem.RemoveEntity(segment.position);
+        }
+
+        _segments.Clear();
+    }
+
+    private async ValueTask HandleEntityCollision(Entity? entity)
+    {
+        if (entity is null) return;
+        if (entity.Value.Has<Snake>())
+        {
+            ResetSnake();
+            return;
+        }
+
+        if (entity.Value.Has<Apple>())
+        {
+            await EatApple(entity.Value);
+        }
+    }
+
+    private async ValueTask EatApple(Entity apple)
+    {
+        if (_snakeEntity is null) return;
+        var snake = _snakeEntity.Value.Get<Snake>();
+        var applesEaten = snake.ApplesEaten + 1;
+        if (applesEaten % 5 == 0)
+        {
+            _snakeSpeed += SnakeSpeedIncrement;
+        }
+
+        _snakeEntity.Value.Add(new Snake { ApplesEaten = applesEaten });
+        await appleCollisionPublisher.PublishAsync(new EntityCollisionSignal(apple));
+        AddSnakeSegment(1);
     }
 
     public async ValueTask UpdateAsync()
@@ -109,95 +170,47 @@ public class SnakeSystem(
         if (_timePassed < SpeedThreshold) return;
         _timePassed = 0f;
 
-        const int spacesToMove = 1;
-        var currentHeadPos = _segments[0];
-        var newHeadPos = currentHeadPos;
+        var hitEntity = MoveSnake();
+        await HandleEntityCollision(hitEntity);
+    }
+
+    private Entity? MoveSnake()
+    {
+        if (_snakeEntity == null) return null;
         var currentDirection = _snakeEntity.Value.Get<Direction>();
-        _nextDirection = SanitizedDirection(currentDirection, _nextDirection);
-        var snakeData = _snakeEntity.Value.Get<Snake>();
+        var newDirection = SanitizedDirection(currentDirection, _changeDirection);
+        _snakeEntity.Value.Add(newDirection);
 
-        switch (_nextDirection)
+        const int spacesToMove = 1;
+        var headPosition = _segments[0];
+        var newHeadPosition = GetNewPosition(headPosition.position, newDirection, spacesToMove);
+
+        var headCollision = gridMapSystem.MoveEntity(headPosition.position, ref newHeadPosition);
+        _segments[0] = (newHeadPosition, newDirection);
+
+        //Shift and Move the body
+        var previousPosition = headPosition;
+        for (var i = 1; i < _segments.Count; i++)
         {
-            case Direction.Unknown:
-                break;
-            case Direction.Up:
-                newHeadPos.Row -= spacesToMove;
-                break;
-            case Direction.Down:
-                newHeadPos.Row += spacesToMove;
-                break;
-            case Direction.Left:
-                newHeadPos.Column -= spacesToMove;
-                break;
-            case Direction.Right:
-                newHeadPos.Column += spacesToMove;
-                break;
-            default:
-                throw new ArgumentOutOfRangeException();
+            var segment = _segments[i];
+            gridMapSystem.MoveEntity(segment.position, ref previousPosition.position);
+            _segments[i] = previousPosition;
+            previousPosition = segment;
         }
 
-        _segments[0] = newHeadPos;
-        var entityReplaced = gridMapSystem.MoveEntity(_segments[0], newHeadPos); //Moves Head
-        if (entityReplaced != null)
-        {
-            //If we hit a snake part we Lose
-            if (entityReplaced.Value.Has<Snake>())
-            {
-                Console.WriteLine("You are lucky, we can't lose yet!");
-            }
-
-            if (entityReplaced.Value.Has<Apple>())
-            {
-                
-                snakeData.Score++;
-                AddSnakeSegment();
-                if (snakeData.Score % 5 == 0)
-                {
-                    _snakeSpeed += SnakeSpeedIncrement;
-                }
-
-                await appleCollisionPublisher.PublishAsync(new EntityCollisionSignal(entityReplaced.Value));
-            }
-        }
-
-        //Catch the body up.
-        var i = _currentSegmentsCount + 1;
-        do
-        {
-            _ = gridMapSystem.MoveEntity(_segments[i], _segments[i - 1]);
-            _segments[i] = _segments[i - 1];
-            i--;
-        } while (i > 0);
-
-        world.Add(_snakeEntity.Value, snakeData, newHeadPos, _nextDirection);
+        return headCollision;
     }
 
     private void Draw(Entity entity)
     {
         if (_snakeEntity == null) return;
         if (entity.Id != _snakeEntity?.Id) return;
-        for (var i = 0; i <= _currentSegmentsCount + 1; i++)
+
+        var entities = gridMapSystem.GetEntitiesById(_snakeEntity.Value.Id);
+        foreach (var e in entities)
         {
-            var bodyScreenPos = GridMapSystem.GetScreenPosition(_segments[i]);
+            var bodyScreenPos = GridMapSystem.GetScreenPosition(e.Item2);
             DrawRectangle((int)bodyScreenPos.X, (int)bodyScreenPos.Y, 16, 16, Color.Red); //The Body Parts
         }
-        DrawScore();
-    }
-
-    private void DrawScore()
-    {
-        var scoreText = "Score: " + (_snakeEntity?.Get<Snake>().Score ?? 0);
-        uint length;
-        unsafe
-        {
-            fixed (byte* p = Encoding.ASCII.GetBytes(scoreText))
-            {
-                length = TextLength((sbyte*)p);
-            }
-        }
-
-        const int fontSize = 32;
-        var xPost = Convert.ToInt32(windowProvider.ScreenWidth - 30 - length * fontSize / 2);
-        DrawText(scoreText, xPost, 10, fontSize, Color.White);
     }
 }

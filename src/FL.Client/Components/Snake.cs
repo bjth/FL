@@ -2,5 +2,5 @@
 
 public record struct Snake
 {
-    public int Score { get; set; }
+    public int ApplesEaten { get; set; }
 }
