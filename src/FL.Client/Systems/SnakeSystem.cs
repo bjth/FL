@@ -19,7 +19,8 @@ public class SnakeSystem(
 {
     private Entity? _snakeEntity;
     private float _timePassed;
-    private float _snakeSpeed = 12f;
+    private const float _baseSpeed = 12f;
+    private float _snakeSpeed = _baseSpeed;
     private const float SnakeSpeedIncrement = 1.5f;
     private const float SpeedThreshold = 1f;
 
@@ -125,6 +126,7 @@ public class SnakeSystem(
         world.Destroy(_snakeEntity.Value);
         _snakeEntity = null;
         _changeDirection = Direction.Right;
+        _snakeSpeed = _baseSpeed;
         foreach (var segment in _segments)
         {
             gridMapSystem.RemoveEntity(segment.position);
