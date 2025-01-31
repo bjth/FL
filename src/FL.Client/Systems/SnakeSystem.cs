@@ -14,13 +14,14 @@ public class SnakeSystem(
     World world,
     DeltaTimeProvider deltaTimeProvider,
     GridMapSystem gridMapSystem,
-    IAsyncPublisher<EntityCollisionSignal> appleCollisionPublisher)
-    : IGameSystem, ISignalConsumer<KeyPressedSignal>
+    IAsyncPublisher<EntityCollisionSignal> appleCollisionPublisher,
+    IAsyncSubscriber<KeyPressedSignal> keyPressedSubscriber)
+    : IGameSystem
 {
     private Entity? _snakeEntity;
     private float _timePassed;
-    private const float _baseSpeed = 12f;
-    private float _snakeSpeed = _baseSpeed;
+    private const float BaseSpeed = 12f;
+    private float _snakeSpeed = BaseSpeed;
     private const float SnakeSpeedIncrement = 1.5f;
     private const float SpeedThreshold = 1f;
 
@@ -35,6 +36,12 @@ public class SnakeSystem(
         { KeyboardKey.W, Direction.Up },
         { KeyboardKey.S, Direction.Down },
     };
+
+    public ValueTask InitializeAsync()
+    {
+        keyPressedSubscriber.Subscribe(Handle);
+        return default;
+    }
 
     public ValueTask Handle(KeyPressedSignal? keyPressedEvent, CancellationToken token = default)
     {
@@ -126,7 +133,7 @@ public class SnakeSystem(
         world.Destroy(_snakeEntity.Value);
         _snakeEntity = null;
         _changeDirection = Direction.Right;
-        _snakeSpeed = _baseSpeed;
+        _snakeSpeed = BaseSpeed;
         foreach (var segment in _segments)
         {
             gridMapSystem.RemoveEntity(segment.position);

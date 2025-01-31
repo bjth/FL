@@ -3,13 +3,18 @@ using Arch.Core.Extensions;
 using FL.Client.Components;
 using FL.Client.Messaging.Signals;
 using FL.Client.Providers;
+using MessagePipe;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
 
 namespace FL.Client.Systems;
 
-public class AppleSystem(World world, DeltaTimeProvider deltaTimeProvider, GridMapSystem gridMapSystem)
-    : IGameSystem, ISignalConsumer<EntityCollisionSignal>
+public class AppleSystem(
+    World world,
+    DeltaTimeProvider deltaTimeProvider,
+    GridMapSystem gridMapSystem,
+    IAsyncSubscriber<EntityCollisionSignal> entityCollisionSubscriber)
+    : IGameSystem
 {
     private readonly HashSet<Entity> _apples = [];
     private float _timePassed;
@@ -30,6 +35,7 @@ public class AppleSystem(World world, DeltaTimeProvider deltaTimeProvider, GridM
 
     public ValueTask InitializeAsync()
     {
+        entityCollisionSubscriber.Subscribe(Handle);
         return SpawnApple();
     }
 

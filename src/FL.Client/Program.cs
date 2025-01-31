@@ -31,12 +31,7 @@ services.AddGameSystem<DrawSystem>();
 
 //Setup Signals and Consumers
 services.AddMessagePipe();
-services.AddSignalConsumer<KeyPressedSignal, KeyPressedSignalConsumer>();
-services.AddSignalConsumer<KeyPressedSignal, SnakeSystem>();
-services.AddSignalConsumer<EntityCollisionSignal, AppleSystem>();
-
 var provider = services.BuildServiceProvider();
-
 
 SetConfigFlags(ConfigFlags.VSyncHint);
 InitWindow(screenWidth, screenHeight, "Mondo Snake");
@@ -45,7 +40,6 @@ SetTargetFPS(240);
 await using (var asyncScope = provider.CreateAsyncScope())
 using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
 {
-    asyncScope.ServiceProvider.UseSignalConsumers();
     var gameSystems = asyncScope.ServiceProvider.GetServices<IGameSystem>().ToList();
     foreach (var gameSystem in gameSystems)
     {
