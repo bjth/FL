@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 using Raylib_cs;
 using static Raylib_cs.Raylib;
 
-namespace FL.Client.Messaging.Signals;
+namespace FL.Client.Signals;
 
 public sealed record KeyPressedSignal(int KeyCode, KeyboardKey Key);
 

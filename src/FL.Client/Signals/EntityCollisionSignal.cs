@@ -1,4 +1,4 @@
 ﻿using Arch.Core;
 
-namespace FL.Client.Messaging.Signals;
+namespace FL.Client.Signals;
 public sealed record EntityCollisionSignal(Entity Entity);

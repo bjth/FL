@@ -1,8 +1,8 @@
 ﻿using Arch.Core;
 using Arch.Core.Extensions;
 using FL.Client.Components;
-using FL.Client.Messaging.Signals;
 using FL.Client.Providers;
+using FL.Client.Signals;
 using MessagePipe;
 using Raylib_cs;
 using static Raylib_cs.Raylib;

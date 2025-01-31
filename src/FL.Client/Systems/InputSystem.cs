@@ -1,4 +1,4 @@
-﻿using FL.Client.Messaging.Signals;
+﻿using FL.Client.Signals;
 using MessagePipe;
 using Raylib_cs;
 
