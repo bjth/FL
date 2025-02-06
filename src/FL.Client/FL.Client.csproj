@@ -23,4 +23,12 @@
       <ProjectReference Include="..\FL.Core\FL.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <None Remove="Assets\SK_Character_Dummy_Male_01.fbx" />
+      <None Remove="Assets\SK_Character_Dummy_Male_01.glb" />
+      <Content Include="Assets\player.glb">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+
 </Project>

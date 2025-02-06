@@ -11,4 +11,14 @@ public interface IGameSystem
     {
         return default;
     }
+
+    public ValueTask DrawAsync()
+    {
+        return default;
+    }
+
+    public ValueTask DrawUIAsync()
+    {
+        return default;
+    }
 }
