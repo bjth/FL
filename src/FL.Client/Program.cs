@@ -128,8 +128,6 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
                     Vector3(planePosition.X + planeSize.X / 2, planePosition.Y + planeSize.Y / 2,
                         planePosition.Z + planeSize.Z / 2));
 
-            groundBoundingBox = bounds;
-
             var rayCollision = GetRayCollisionBox(ray, groundBoundingBox);
             
             //var collision = RayExtensions.RayPlaneIntersection(ray, planePosition, new Vector3(0f, 1f, 0f));
@@ -169,8 +167,9 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
         
         //Temp Debug
         //DrawCube(cubePosition, cubeSize.X, cubeSize.Y, cubeSize.Z, Color.Red);
-        DrawModel(model, cubePosition, 0.01f, Color.White);
-        DrawCubeWires(cubePosition, cubeSize.X, cubeSize.Y, cubeSize.Z, Color.Maroon);
+        DrawModel(model, cubePosition, 0.01f, Color.Red);
+        DrawModelWires(model, cubePosition, 0.01f, Color.Maroon);
+        //DrawCubeWires(cubePosition, cubeSize.X, cubeSize.Y, cubeSize.Z, Color.Maroon);
         DrawCube(planePosition, planeSize.X, planeSize.Y, planeSize.Z, Color.DarkGray);
         //DrawGrid(5000, 1.0f);
         //Temp End
