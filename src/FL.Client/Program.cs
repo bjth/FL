@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Arch.Core;
+using FL.Client;
 using FL.Client.Providers;
 using FL.Client.Systems;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,7 +33,7 @@ var provider = services.BuildServiceProvider();
 
 SetConfigFlags(ConfigFlags.VSyncHint | ConfigFlags.Msaa4xHint | ConfigFlags.UndecoratedWindow);
 InitWindow(screenWidth, screenHeight, "Forgotten Legacy");
-SetTargetFPS(240);
+SetTargetFPS(60);
 
 await using (var asyncScope = provider.CreateAsyncScope())
 using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
@@ -71,7 +72,7 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
     var animFrameCount = 0;
 
     var playerScale = 1f;
-    var animationIndex = 1;
+    var animationIndex = 0;
     
     unsafe
     {
@@ -166,8 +167,12 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
         // If the cube is far enough from the target, move it
         if (Vector3.Distance(cubePosition, targetPosition) > 0.1f)
         {
+            //model.RotateTowards(targetPosition);
+
+            model.Transform = cubePosition.RotateTowards(targetPosition);
             // Perform linear interpolation (lerp) for smoother movement
             cubePosition = Vector3.Lerp(cubePosition, targetPosition, speed * deltaTime);
+            
         }
         else
         {
