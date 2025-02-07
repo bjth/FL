@@ -56,4 +56,37 @@ public static class RotationHelper
 
         return angles;
     }
+    
+    public static Vector3 ClampMagnitude(Vector3 vector, float maxLength)
+    {
+        // Get the length (magnitude) of the vector
+        var length = vector.Length();
+
+        // If the vector's length is greater than the max length, clamp it
+        if (length > maxLength)
+        {
+            // Normalize the vector and scale it to maxLength
+            vector = Vector3.Normalize(vector) * maxLength;
+        }
+
+        // Return the clamped vector
+        return vector;
+    }
+    
+    public static Vector3 MoveTowards(Vector3 current, Vector3 target, float maxDistanceDelta)
+    {
+        // Calculate the direction from current to target
+        var direction = target - current;
+        var distance = direction.Length();
+
+        // If the distance is less than or equal to maxDistanceDelta, return the target
+        if (distance <= maxDistanceDelta || distance == 0)
+        {
+            return target;
+        }
+
+        // Normalize the direction and move towards the target by maxDistanceDelta
+        direction = Vector3.Normalize(direction);
+        return current + direction * maxDistanceDelta;
+    }
 }
