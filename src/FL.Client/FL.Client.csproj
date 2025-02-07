@@ -13,22 +13,32 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Arch" Version="1.2.8" />
-      <PackageReference Include="MessagePipe" Version="1.8.1" />
-      <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1" />
-      <PackageReference Include="Raylib-cs" Version="7.0.0" />
+        <PackageReference Include="Arch" Version="1.2.8"/>
+        <PackageReference Include="MessagePipe" Version="1.8.1"/>
+        <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.1"/>
+        <PackageReference Include="Raylib-cs" Version="7.0.1"/>
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FL.Core\FL.Core.csproj" />
+        <ProjectReference Include="..\FL.Core\FL.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Assets\SK_Character_Dummy_Male_01.fbx" />
-      <None Remove="Assets\SK_Character_Dummy_Male_01.glb" />
-      <Content Include="Assets\player.glb">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
+        <None Remove="Assets\*.glb"/>
+        <None Remove="Assets\*.fbx"/>
+        <None Remove="Assets\*.iqm"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="Assets\*.glb">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\*.fbx">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Assets\*.iqm">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
     </ItemGroup>
 
 </Project>

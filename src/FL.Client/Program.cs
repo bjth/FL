@@ -64,11 +64,24 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
     var targetPosition = new Vector3(0.0f, 0.0f, 0.0f);
     var speed = 1.2f;
 
-    var model = LoadModel("Assets/player.glb");
+    var model = LoadModel("Assets/untitled.glb");
+    var animationCount = 0;
     var bounds = new BoundingBox();
+    var animations = new List<ModelAnimation>();
+    var animFrameCount = 0;
+
+    var playerScale = 1f;
+    var animationIndex = 1;
+    
     unsafe
     {
-        bounds = GetMeshBoundingBox(model.Meshes[0]);    
+        var animation = LoadModelAnimations("Assets/untitled.glb", ref animationCount);
+        // idle = animation[0];
+        animations.Add(animation[animationIndex]);
+        //
+        Console.WriteLine(animationCount);
+        bounds = GetMeshBoundingBox(model.Meshes[0]);
+        //animationCount = 0;
     }
     
 
@@ -103,20 +116,26 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
 
         // Zoom in/out using the mouse wheel
         cameraDistance -= GetMouseWheelMove() * 2f; // Adjust zoom speed (e.g., 2f)
-        cameraDistance = Math.Clamp(cameraDistance, 5f, 50f); // Set limits for zooming
+        cameraDistance = Math.Clamp(cameraDistance, 0f, 500f); // Set limits for zooming
 
         // Update camera position based on camera distance and height
-        // camera.Position = new Vector3(
-        //     cubePosition.X + cameraDistance * MathF.Sin(phi) * MathF.Cos(theta),
-        //     cubePosition.Y + cameraHeight + cameraDistance * MathF.Cos(phi),
-        //     cubePosition.Z + cameraDistance * MathF.Sin(phi) * MathF.Sin(theta)
-        // );
+        camera.Position = new Vector3(
+            cubePosition.X + cameraDistance * MathF.Sin(phi) * MathF.Cos(theta),
+            cubePosition.Y + cameraHeight + cameraDistance * MathF.Cos(phi),
+            cubePosition.Z + cameraDistance * MathF.Sin(phi) * MathF.Sin(theta)
+        );
         //
         // // Keep the camera looking at the player (target)
-        // camera.Target = cubePosition;
+         camera.Target = cubePosition;
 
         // Update camera
         UpdateCamera(ref camera, CameraMode.Custom);
+
+        if (animationCount > 0)
+        {
+            animFrameCount++;
+            UpdateModelAnimation(model, animations[0], animFrameCount);
+        }
 
         if (IsMouseButtonPressed(MouseButton.Right))
         {
@@ -167,11 +186,11 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
         
         //Temp Debug
         //DrawCube(cubePosition, cubeSize.X, cubeSize.Y, cubeSize.Z, Color.Red);
-        DrawModel(model, cubePosition, 0.01f, Color.Red);
-        DrawModelWires(model, cubePosition, 0.01f, Color.Maroon);
+        DrawModel(model, cubePosition, playerScale, Color.Red);
+        DrawModelWires(model, cubePosition, playerScale, Color.Maroon);
         //DrawCubeWires(cubePosition, cubeSize.X, cubeSize.Y, cubeSize.Z, Color.Maroon);
-        DrawCube(planePosition, planeSize.X, planeSize.Y, planeSize.Z, Color.DarkGray);
-        //DrawGrid(5000, 1.0f);
+        //DrawCube(planePosition, planeSize.X, planeSize.Y, planeSize.Z, Color.DarkGray);
+        DrawGrid(100, 1.0f);
         //Temp End
         
         foreach (var gameSystem in gameSystems)
