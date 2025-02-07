@@ -1,27 +1,14 @@
-﻿using System.Drawing;
-using System.Numerics;
-using Raylib_cs;
-
+﻿using System.Numerics;
 namespace FL.Client;
 
 public static class RotationHelper
 {
     public static Matrix4x4 RotateTowards(this Vector3 position, Vector3 target)
     {
-        Console.WriteLine($"position: {position}");
-        
         var difference = Vector3.Subtract(position, target);
-        var yaw = Convert.ToSingle((Math.Atan2(difference.Y, difference.X) + Math.PI / 2.0f));
-        
-        Console.WriteLine($"yaw: {yaw}");
-        
+        var yaw = Convert.ToSingle(Math.Atan2(difference.Z, difference.X) + Math.PI / 2.0f);
         var newRotation = new Vector3(0, yaw, 0);
-
-        var start = ToQuaternion(position);
-        var end = ToQuaternion(newRotation);
-        var slerp = Quaternion.Slerp(start, end, 0.5f);
-
-        return Matrix4x4.CreateFromQuaternion(slerp);
+        return Matrix4x4.CreateFromQuaternion(ToQuaternion(newRotation));
     }
     
     public static Quaternion ToQuaternion(Vector3 v)
@@ -69,5 +56,4 @@ public static class RotationHelper
 
         return angles;
     }
-    
 }

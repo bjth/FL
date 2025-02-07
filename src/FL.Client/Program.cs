@@ -167,12 +167,9 @@ using (_ = asyncScope.ServiceProvider.GetRequiredService<World>())
         // If the cube is far enough from the target, move it
         if (Vector3.Distance(cubePosition, targetPosition) > 0.1f)
         {
-            //model.RotateTowards(targetPosition);
-
-            model.Transform = cubePosition.RotateTowards(targetPosition);
             // Perform linear interpolation (lerp) for smoother movement
             cubePosition = Vector3.Lerp(cubePosition, targetPosition, speed * deltaTime);
-            
+            model.Transform = cubePosition.RotateTowards(targetPosition);
         }
         else
         {
